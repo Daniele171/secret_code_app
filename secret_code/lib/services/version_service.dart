@@ -19,6 +19,26 @@ class VersionService {
     return await PackageInfo.fromPlatform();
   }
 
+  /// Ottiene la versione minima richiesta dal server
+  static Future<String> getMinimumVersionRequired() async {
+    try {
+      debugPrint("🌍 Richiedo versione minima da: $_minVersionUrl");
+      final response = await http.get(Uri.parse(_minVersionUrl)).timeout(const Duration(seconds: 5));
+      debugPrint("📡 Risposta HTTP: ${response.statusCode} - ${response.body}");
+      if (response.statusCode == 200) {
+        String version = response.body.trim();
+        debugPrint("✅ Versione minima ottenuta dal server: $version");
+        return version;
+      } else {
+        debugPrint("⚠️ HTTP ${response.statusCode}, uso fallback: $_fallbackMinVersion");
+        return _fallbackMinVersion;
+      }
+    } catch (e) {
+      debugPrint("⚠️ Errore nel recupero versione minima: $e, uso fallback: $_fallbackMinVersion");
+      return _fallbackMinVersion;
+    }
+  }
+
   /// Verifica se la versione corrente è supportata controllando su ALTERVISTA.
   static Future<bool> isVersionSupported() async {
     try {
@@ -26,22 +46,16 @@ class VersionService {
       final currentVersion = packageInfo.version;
       
       // 1. Proviamo a scaricare la versione minima dal sito
-      String minVersionFromServer = _fallbackMinVersion;
-      try {
-        debugPrint("🌍 Controllo versione minima su: $_minVersionUrl");
-        final response = await http.get(Uri.parse(_minVersionUrl)).timeout(const Duration(seconds: 5));
-        if (response.statusCode == 200) {
-          minVersionFromServer = response.body.trim(); // Es: "2.0.0" o "3.0.0"
-          debugPrint("🌍 Minima richiesta dal server: $minVersionFromServer");
-        }
-      } catch (e) {
-        debugPrint("⚠️ Impossibile leggere min_version.txt (offline?), uso fallback: $_fallbackMinVersion");
-      }
+      String minVersionFromServer = await getMinimumVersionRequired();
 
       debugPrint("📱 Versione App installata: $currentVersion");
+      debugPrint("🔍 Confronto versioni: $currentVersion vs $minVersionFromServer");
 
       // 2. Confrontiamo: Se (App < ServerMinima) -> BLOCCA
-      if (_compareVersions(currentVersion, minVersionFromServer) < 0) {
+      int comparisonResult = _compareVersions(currentVersion, minVersionFromServer);
+      debugPrint("📊 Risultato confronto: $comparisonResult (negativo = blocco)");
+
+      if (comparisonResult < 0) {
         debugPrint("❌ BLOCCO ATTIVO: La versione è troppo vecchia.");
         return false; 
       }

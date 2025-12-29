@@ -90,11 +90,15 @@ class _IntroScreenState extends State<IntroScreen> {
     if (!isSupported && mounted) {
       // CASO BLOCCO: Versione obsoleta
       final currentVersion = await VersionService.getCurrentVersion();
+      final minimumVersion = await VersionService.getMinimumVersionRequired();
+      
+      debugPrint("🔒 Blocco attivo - App: ${currentVersion.version}, Minima: $minimumVersion");
+      
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => VersionBlockScreen(
           currentVersion: currentVersion.version,
-          minimumVersion: "2.0.0", // Deve matchare quella in VersionService
+          minimumVersion: minimumVersion,
         ))
       );
     } else if (mounted) {
