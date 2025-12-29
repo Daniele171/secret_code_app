@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Fondamentale per recuperare l'ID ospite
 import '../models/game_settings.dart';
 import '../logic/game_logic.dart';
+import '../services/api_service.dart'; // Per il salvataggio API
 
 class GameScreen extends StatefulWidget {
   final GameSettings settings;
@@ -33,9 +35,11 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    // Inizializza i colori disponibili
     currentColors = kGameColors.keys.toList();
     selectedColor = currentColors[0];
     
+    // Configurazione animazioni
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -154,6 +158,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         if (currentRow >= widget.settings.maxRows) {
           _endGame(false);
         } else {
+          // Scroll automatico verso l'alto per mostrare la nuova riga
           Future.delayed(const Duration(milliseconds: 300), () {
              if(_scrollController.hasClients) {
                _scrollController.animateTo(
@@ -168,17 +173,56 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     });
   }
 
-  void _endGame(bool win) {
-    isGameOver = true;
+  // LOGICA FINE PARTITA E SALVATAGGIO AUTOMATICO
+  Future<void> _endGame(bool win) async {
+    setState(() {
+      isGameOver = true;
+    });
     _stopTimer();
+
     if (win) {
-      _animationController.repeat(reverse: true);
+      _animationController.repeat(reverse: true); // Animazione vittoria
+      
+      // --- SALVATAGGIO AUTOMATICO ---
+      // Se stiamo giocando un livello della carriera (levelId != null)
+      if (widget.levelId != null) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          // Recupera l'ID utente (o l'ID ospite generato in main.dart)
+          final userId = prefs.getString('username');
+          
+          if (userId != null && userId.isNotEmpty) {
+            debugPrint("☁️ Salvataggio automatico per utente: $userId al livello ${widget.levelId}");
+            
+            // Chiamata API silenziosa
+            ApiService.saveProgress(userId, widget.levelId!).then((success) {
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Progresso salvato online! ✅"),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  )
+                );
+              }
+            });
+          } else {
+            debugPrint("⚠️ Impossibile salvare: Nessun username/ID trovato.");
+          }
+        } catch (e) {
+          debugPrint("❌ Errore durante il salvataggio automatico: $e");
+        }
+      }
+      // -----------------------------
     }
     
+    if (!mounted) return;
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
 
+    // Mostra il modale di fine partita
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -189,7 +233,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          // Corretto const e BoxShadow
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)]
         ),
         child: Column(
@@ -211,6 +254,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             const SizedBox(height: 20),
             Text("Il codice segreto era:", style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600])),
             const SizedBox(height: 15),
+            
+            // Mostra la soluzione
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: secretCode.map((c) => Container(
@@ -220,19 +265,20 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                   color: kGameColors[c],
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 3),
-                  // Corretto withValues
                   boxShadow: [BoxShadow(color: kGameColors[c]!.withValues(alpha: 0.6), blurRadius: 10)]
                 ),
               )).toList(),
             ),
             const SizedBox(height: 30),
+            
+            // Pulsanti Azione
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () { 
                       Navigator.pop(ctx); 
-                      Navigator.pop(context, win); 
+                      Navigator.pop(context, win); // Torna indietro passando il risultato
                     }, 
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.all(15),
@@ -292,23 +338,24 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       ),
       body: Column(
         children: [
+          // GRIGLIA DI GIOCO
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               itemCount: widget.settings.maxRows,
-              reverse: true,
+              reverse: true, // Parte dal basso
               itemBuilder: (ctx, index) => _buildGameRow(index),
             ),
           ),
           
+          // AREA CONTROLLI (Scelta colore e pulsante verifica)
           Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               boxShadow: [
-                // Corretto withValues
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1), 
                   blurRadius: 15, 
@@ -319,6 +366,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Selettore Colori
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -343,7 +391,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                               : null,
                             boxShadow: [
                               if (isSelected)
-                                // Corretto withValues
                                 BoxShadow(
                                   color: kGameColors[c]!.withValues(alpha: 0.4), 
                                   blurRadius: 12, 
@@ -358,6 +405,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 20),
                 
+                // Pulsanti Pulisci e Verifica
                 Row(
                   children: [
                     Container(
@@ -394,8 +442,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Costruisce una singola riga di tentativo
   Widget _buildGameRow(int rowIndex) {
     bool isActive = rowIndex == currentRow && !isGameOver;
+    // Nascondi le righe future
     if (rowIndex > currentRow) {
        return Opacity(opacity: 0.1, child: _dummyRow()); 
     }
@@ -415,12 +465,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           border: isActive ? Border.all(color: activeBorder, width: 2) : null,
           boxShadow: [
              if (rowIndex == currentRow)
-               // Corretto withValues
                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)
           ]
         ),
         child: Row(
           children: [
+            // Numero riga
             SizedBox(
               width: 20,
               child: Text(
@@ -431,6 +481,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 )
               ),
             ),
+            // Fori per i pioli
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -461,6 +512,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                 }),
               ),
             ),
+            // Griglia dei feedback (bianchi/neri)
             Container(
               width: 44, height: 44,
               padding: const EdgeInsets.all(4),
@@ -476,6 +528,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Riga vuota placeholder
   Widget _dummyRow() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -488,6 +541,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Costruisce i pallini di feedback
   Widget _buildFeedbackGrid(Map<String, int>? feedback) {
     if (feedback == null) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -502,6 +556,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       pegs.add(_buildPeg(type: 'white'));
     }
     
+    // Riempi gli spazi vuoti
     while(pegs.length < 4) {
       pegs.add(const SizedBox(width: 10, height: 10));
     }
@@ -516,6 +571,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Costruisce il singolo piolo di feedback
   Widget _buildPeg({required String type}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     Color color;
@@ -543,7 +599,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
         border: border,
         boxShadow: [
           if (type == 'black' && !isDark) 
-             // Corretto const
              const BoxShadow(color: Colors.black26, blurRadius: 2)
         ]
       ),
