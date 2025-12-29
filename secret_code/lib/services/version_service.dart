@@ -3,48 +3,67 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
 class VersionService {
-  // --- CONFIGURAZIONE TEST ---
-  // Per TESTARE IL BLOCCO: Imposta questa versione a "9.9.9"
-  // Per il RILASCIO: Impostala alla versione minima reale (es. "2.0.0")
-  static const String _minimumRequiredVersion = "2.0.0";
+  // CONFIGURAZIONE:
   
-  // URL del file remoto per controllo aggiornamenti (opzionale se usi solo il blocco locale)
-  static const String _versionCheckUrl = "https://grz.altervista.org/html/latest_version.txt";
+  // 1. URL per controllare la versione MINIMA richiesta (BLOCCO)
+  static const String _minVersionUrl = "https://grz.altervista.org/html/min_version.txt";
+  
+  // 2. URL per controllare l'ULTIMA versione disponibile (AGGIORNAMENTO FACOLTATIVO)
+  static const String _latestVersionUrl = "https://grz.altervista.org/html/latest_version.txt";
 
+  // Fallback di sicurezza: se il sito è offline, usiamo questa come minima
+  static const String _fallbackMinVersion = "2.0.0";
+
+  /// Ottiene le informazioni della versione corrente dell'app
   static Future<PackageInfo> getCurrentVersion() async {
     return await PackageInfo.fromPlatform();
   }
 
+  /// Verifica se la versione corrente è supportata controllando su ALTERVISTA.
   static Future<bool> isVersionSupported() async {
     try {
       final packageInfo = await getCurrentVersion();
       final currentVersion = packageInfo.version;
       
-      debugPrint("🔍 Versione App: $currentVersion");
-      debugPrint("🔒 Minima Richiesta: $_minimumRequiredVersion");
-      
-      // Controllo: Se la versione corrente è minore della minima richiesta -> BLOCCA
-      if (_compareVersions(currentVersion, _minimumRequiredVersion) < 0) {
-        debugPrint("❌ BLOCCO ATTIVO: La versione è obsoleta.");
-        return false; // Non supportata -> Mostra schermata di blocco
+      // 1. Proviamo a scaricare la versione minima dal sito
+      String minVersionFromServer = _fallbackMinVersion;
+      try {
+        debugPrint("🌍 Controllo versione minima su: $_minVersionUrl");
+        final response = await http.get(Uri.parse(_minVersionUrl)).timeout(const Duration(seconds: 5));
+        if (response.statusCode == 200) {
+          minVersionFromServer = response.body.trim(); // Es: "2.0.0" o "3.0.0"
+          debugPrint("🌍 Minima richiesta dal server: $minVersionFromServer");
+        }
+      } catch (e) {
+        debugPrint("⚠️ Impossibile leggere min_version.txt (offline?), uso fallback: $_fallbackMinVersion");
+      }
+
+      debugPrint("📱 Versione App installata: $currentVersion");
+
+      // 2. Confrontiamo: Se (App < ServerMinima) -> BLOCCA
+      if (_compareVersions(currentVersion, minVersionFromServer) < 0) {
+        debugPrint("❌ BLOCCO ATTIVO: La versione è troppo vecchia.");
+        return false; 
       }
       
-      debugPrint("✅ Versione OK.");
-      return true; // Supportata -> Vai al menu
+      debugPrint("✅ Versione supportata.");
+      return true; 
     } catch (e) {
-      debugPrint("⚠️ Errore controllo versione: $e");
-      return true; // In caso di errore, lasciamo passare per non bloccare utenti a caso
+      debugPrint("⚠️ Errore critico version service: $e");
+      return true; // Per sicurezza non blocchiamo in caso di crash locale
     }
   }
 
+  /// Controlla se c'è un aggiornamento facoltativo (icona settings)
   static Future<String?> checkForUpdates() async {
     try {
-      final response = await http.get(Uri.parse(_versionCheckUrl));
+      final response = await http.get(Uri.parse(_latestVersionUrl));
       if (response.statusCode == 200) {
-        final latestVersion = response.body.trim();
+        final latestVersionOnline = response.body.trim();
         final packageInfo = await getCurrentVersion();
-        if (_compareVersions(latestVersion, packageInfo.version) > 0) {
-          return latestVersion;
+        
+        if (_compareVersions(latestVersionOnline, packageInfo.version) > 0) {
+          return latestVersionOnline;
         }
       }
       return null;
