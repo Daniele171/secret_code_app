@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ApiService {
   // URL corretti per Altervista
@@ -61,8 +62,17 @@ class ApiService {
         debugPrint("📄 Dati ricevuti: ${response.body.length} caratteri");
         debugPrint("✅ Classifica caricata con successo");
         
-        // TODO: Implementare parsing JSON effettivo
-        return [];
+        try {
+          final jsonData = jsonDecode(response.body);
+          if (jsonData is List) {
+            return List<Map<String, dynamic>>.from(jsonData);
+          }
+          debugPrint("⚠️ Formato JSON non valido: atteso List");
+          return [];
+        } catch (e) {
+          debugPrint("❌ Errore parsing JSON: $e");
+          return [];
+        }
       } else {
         debugPrint("⚠️ Impossibile caricare classifica: HTTP ${response.statusCode}");
         return [];

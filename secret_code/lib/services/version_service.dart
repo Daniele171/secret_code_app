@@ -106,12 +106,12 @@ class VersionService {
     }
   }
 
-  stat// Rimuovi build number (es: 1.0.0+1 -> 1.0.0) per evitare errori di parsing
+  static int _compareVersions(String v1, String v2) {
+    try {
+      // Rimuovi build number (es: 1.0.0+1 -> 1.0.0) per evitare errori di parsing
       v1 = v1.split('+')[0];
       v2 = v2.split('+')[0];
 
-      ic int _compareVersions(String v1, String v2) {
-    try {
       final parts1 = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
       final parts2 = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
       for (int i = 0; i < 3; i++) {

@@ -94,13 +94,15 @@ class _IntroScreenState extends State<IntroScreen> {
       
       debugPrint("🔒 Blocco attivo - App: ${currentVersion.version}, Minima: $minimumVersion");
       
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => VersionBlockScreen(
-          currentVersion: currentVersion.version,
-          minimumVersion: minimumVersion,
-        ))
-      );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => VersionBlockScreen(
+            currentVersion: currentVersion.version,
+            minimumVersion: minimumVersion,
+          ))
+        );
+      }
     } else if (mounted) {
       // CASO OK: Vai al menu
       Navigator.pushReplacement(
