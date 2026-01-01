@@ -35,8 +35,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    // Inizializza i colori disponibili
-    currentColors = kGameColors.keys.toList();
+    // Inizializza i colori disponibili in base alle impostazioni
+    currentColors = kGameColors.keys.toList().take(widget.settings.numberOfColors).toList();
     selectedColor = currentColors[0];
     
     // Configurazione animazioni
