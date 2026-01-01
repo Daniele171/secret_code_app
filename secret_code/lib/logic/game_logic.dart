@@ -9,6 +9,10 @@ final Map<String, Color> kGameColors = {
   'green':  const Color(0xFF2ECC40),
   'blue':   const Color(0xFF0074D9),
   'brown':  const Color(0xFF914713),
+  'purple': const Color(0xFF9B59B6),
+  'pink':   const Color(0xFFE91E63),
+  'cyan':   const Color(0xFF00BCD4),
+  'gray':   const Color(0xFF95A5A6),
 };
 
 class GameLogic {

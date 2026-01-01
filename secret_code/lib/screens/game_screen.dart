@@ -184,36 +184,68 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       _animationController.repeat(reverse: true); // Animazione vittoria
       
       // --- SALVATAGGIO AUTOMATICO ---
-      // Se stiamo giocando un livello della carriera (levelId != null)
-      if (widget.levelId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('username');
+      
+      if (userId != null && userId.isNotEmpty) {
+        // Se stiamo giocando un livello della carriera (levelId != null)
+        if (widget.levelId != null) {
+          debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello ${widget.levelId}");
+          
+          // Chiamata API silenziosa per progressi carriera
+          ApiService.saveProgress(userId, widget.levelId!).then((success) {
+            if (success && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Progresso salvato online! ✅"),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                )
+              );
+            }
+          });
+        } else {
+          // Modalità ALLENAMENTO - salva statistiche
+          debugPrint("📊 Salvataggio statistiche ALLENAMENTO per utente: $userId");
+          
+          ApiService.saveTrainingStats(
+            username: userId,
+            attempts: currentRow + 1,
+            won: true,
+            codeLength: widget.settings.codeLength,
+            allowDuplicates: widget.settings.allowDuplicates,
+          ).then((success) {
+            if (success) {
+              debugPrint("✅ Statistiche allenamento salvate!");
+            }
+          });
+        }
+      } else {
+        debugPrint("⚠️ Impossibile salvare: Nessun username/ID trovato.");
+      }
+      // -----------------------------
+    } else {
+      // Anche in caso di sconfitta, salva le statistiche in modalità allenamento
+      if (widget.levelId == null) {
         try {
           final prefs = await SharedPreferences.getInstance();
-          // Recupera l'ID utente (o l'ID ospite generato in main.dart)
           final userId = prefs.getString('username');
           
           if (userId != null && userId.isNotEmpty) {
-            debugPrint("☁️ Salvataggio automatico per utente: $userId al livello ${widget.levelId}");
+            debugPrint("📊 Salvataggio statistiche ALLENAMENTO (sconfitta) per utente: $userId");
             
-            // Chiamata API silenziosa
-            ApiService.saveProgress(userId, widget.levelId!).then((success) {
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Progresso salvato online! ✅"),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 2),
-                  )
-                );
-              }
-            });
-          } else {
-            debugPrint("⚠️ Impossibile salvare: Nessun username/ID trovato.");
+            ApiService.saveTrainingStats(
+              username: userId,
+              attempts: currentRow + 1,
+              won: false,
+              codeLength: widget.settings.codeLength,
+              allowDuplicates: widget.settings.allowDuplicates,
+            );
           }
         } catch (e) {
-          debugPrint("❌ Errore durante il salvataggio automatico: $e");
+          debugPrint("❌ Errore salvataggio statistiche sconfitta: $e");
         }
       }
-      // -----------------------------
     }
     
     if (!mounted) return;

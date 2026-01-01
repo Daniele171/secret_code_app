@@ -8,6 +8,9 @@ class ApiService {
   
   // URL per il salvataggio dei progressi
   static const String _saveUrl = 'https://grz.altervista.org/php/save_score.php';
+  
+  // URL per il salvataggio delle statistiche allenamento
+  static const String _saveTrainingUrl = 'https://grz.altervista.org/php/save_training.php';
 
   static Future<bool> saveProgress(String username, int level) async {
     debugPrint("💾 Tentativo di salvataggio per $username al livello $level...");
@@ -39,6 +42,49 @@ class ApiService {
       }
     } catch (e) {
       debugPrint("❌ Errore Connessione: $e");
+      return false;
+    }
+  }
+
+  // Salva le statistiche dell'allenamento
+  static Future<bool> saveTrainingStats({
+    required String username,
+    required int attempts,
+    required bool won,
+    required int codeLength,
+    required bool allowDuplicates,
+  }) async {
+    debugPrint("📊 Salvataggio statistiche allenamento per $username...");
+
+    try {
+      final response = await http.post(
+        Uri.parse(_saveTrainingUrl),
+        body: {
+          'username': username,
+          'attempts': attempts.toString(),
+          'won': won ? '1' : '0',
+          'code_length': codeLength.toString(),
+          'allow_duplicates': allowDuplicates ? '1' : '0',
+          'secret_key': 'chiave_segreta_123',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      debugPrint("📡 Risposta HTTP statistiche: ${response.statusCode} - ${response.body}");
+
+      if (response.statusCode == 200) {
+        if (response.body.contains('"status":"success"')) {
+          debugPrint("✅ Statistiche allenamento salvate!");
+          return true;
+        } else {
+          debugPrint("⚠️ Risposta imprevista: ${response.body}");
+          return true;
+        }
+      } else {
+        debugPrint("❌ Errore Server statistiche: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("❌ Errore salvataggio statistiche: $e");
       return false;
     }
   }
