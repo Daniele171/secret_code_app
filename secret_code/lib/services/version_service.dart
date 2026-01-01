@@ -23,7 +23,9 @@ class VersionService {
   static Future<String> getMinimumVersionRequired() async {
     try {
       debugPrint("🌍 Richiedo versione minima da: $_minVersionUrl");
-      final response = await http.get(Uri.parse(_minVersionUrl)).timeout(const Duration(seconds: 5));
+      // Aggiungiamo un timestamp per evitare la cache
+      final urlWithTimestamp = "$_minVersionUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      final response = await http.get(Uri.parse(urlWithTimestamp)).timeout(const Duration(seconds: 5));
       debugPrint("📡 Risposta HTTP: ${response.statusCode} - ${response.body}");
       if (response.statusCode == 200) {
         String version = response.body.trim();
@@ -87,7 +89,9 @@ class VersionService {
   /// Controlla se c'è un aggiornamento facoltativo (icona settings)
   static Future<String?> checkForUpdates() async {
     try {
-      final response = await http.get(Uri.parse(_latestVersionUrl));
+      // Aggiungiamo un timestamp per evitare la cache
+      final urlWithTimestamp = "$_latestVersionUrl?t=${DateTime.now().millisecondsSinceEpoch}";
+      final response = await http.get(Uri.parse(urlWithTimestamp));
       if (response.statusCode == 200) {
         final latestVersionOnline = response.body.trim();
         final packageInfo = await getCurrentVersion();
@@ -102,7 +106,11 @@ class VersionService {
     }
   }
 
-  static int _compareVersions(String v1, String v2) {
+  stat// Rimuovi build number (es: 1.0.0+1 -> 1.0.0) per evitare errori di parsing
+      v1 = v1.split('+')[0];
+      v2 = v2.split('+')[0];
+
+      ic int _compareVersions(String v1, String v2) {
     try {
       final parts1 = v1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
       final parts2 = v2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
