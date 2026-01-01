@@ -34,7 +34,15 @@ class VersionService {
         return _fallbackMinVersion;
       }
     } catch (e) {
-      debugPrint("⚠️ Errore nel recupero versione minima: $e, uso fallback: $_fallbackMinVersion");
+      // Gestione specifica per CORS su web
+      String errorMessage = e.toString();
+      if (errorMessage.contains('XMLHttpRequest') || errorMessage.contains('CORS')) {
+        debugPrint("🌐 Errore CORS su web, uso fallback: $_fallbackMinVersion");
+        debugPrint("💡 Per le app web, il sito deve essere sullo stesso dominio");
+      } else {
+        debugPrint("⚠️ Errore nel recupero versione minima: $e");
+      }
+      debugPrint("🔄 Uso fallback: $_fallbackMinVersion");
       return _fallbackMinVersion;
     }
   }
@@ -53,7 +61,15 @@ class VersionService {
 
       // 2. Confrontiamo: Se (App < ServerMinima) -> BLOCCA
       int comparisonResult = _compareVersions(currentVersion, minVersionFromServer);
-      debugPrint("📊 Risultato confronto: $comparisonResult (negativo = blocco)");
+      
+      // Logica corretta: se comparisonResult >= 0 = OK, se < 0 = BLOCCO
+      String resultDesc;
+      if (comparisonResult >= 0) {
+        resultDesc = "positivo = OK";
+      } else {
+        resultDesc = "negativo = blocco";
+      }
+      debugPrint("📊 Risultato confronto: $comparisonResult ($resultDesc)");
 
       if (comparisonResult < 0) {
         debugPrint("❌ BLOCCO ATTIVO: La versione è troppo vecchia.");
