@@ -49,14 +49,14 @@ class LevelsData {
       id: 5,
       title: "High Five",
       description: "Codice a 5 colori. Nessun duplicato.",
-      settings: GameSettings(codeLength: 5, maxRows: 12, allowDuplicates: false),
+      settings: GameSettings(codeLength: 5, maxRows: 12, allowDuplicates: false, numberOfColors: 5),
     ),
     // LIV 6: Maestro
     GameLevel(
       id: 6,
       title: "Caos Calmo",
       description: "5 colori con duplicati. Hai 12 tentativi.",
-      settings: GameSettings(codeLength: 5, maxRows: 12, allowDuplicates: true),
+      settings: GameSettings(codeLength: 5, maxRows: 12, allowDuplicates: true, numberOfColors: 5),
     ),
     // LIV 7: Cecchino
     GameLevel(
@@ -70,21 +70,21 @@ class LevelsData {
       id: 8,
       title: "Elite Six",
       description: "Codice a 6 colori (lungo). No duplicati.",
-      settings: GameSettings(codeLength: 6, maxRows: 12, allowDuplicates: false),
+      settings: GameSettings(codeLength: 6, maxRows: 12, allowDuplicates: false, numberOfColors: 6),
     ),
     // LIV 9: Gran Maestro
     GameLevel(
       id: 9,
       title: "Incubo Logico",
       description: "6 colori. Duplicati ammessi. Buona fortuna.",
-      settings: GameSettings(codeLength: 6, maxRows: 12, allowDuplicates: true),
+      settings: GameSettings(codeLength: 6, maxRows: 12, allowDuplicates: true, numberOfColors: 6),
     ),
     // LIV 10: Impossibile
     GameLevel(
       id: 10,
       title: "THE FINAL BOSS",
       description: "6 colori. Duplicati. Solo 8 tentativi. Sei pronto?",
-      settings: GameSettings(codeLength: 6, maxRows: 8, allowDuplicates: true),
+      settings: GameSettings(codeLength: 6, maxRows: 8, allowDuplicates: true, numberOfColors: 6),
     ),
   ];
 }
