@@ -168,10 +168,18 @@ class _CareerScreenState extends State<CareerScreen> {
 
   void _playLevel(GameLevel level) async {
     HapticFeedback.mediumImpact();
+    // Crea GameSettings con l'hint dal livello
+    final gameSettings = GameSettings(
+      codeLength: level.settings.codeLength,
+      maxRows: level.settings.maxRows,
+      allowDuplicates: level.settings.allowDuplicates,
+      numberOfColors: level.settings.numberOfColors,
+      hint: level.hint,
+    );
     final bool? result = await Navigator.push(
       context, 
       MaterialPageRoute(
-        builder: (_) => GameScreen(settings: level.settings, levelId: level.id)
+        builder: (_) => GameScreen(settings: gameSettings, levelId: level.id)
       )
     );
 
