@@ -110,7 +110,39 @@ class _CareerScreenState extends State<CareerScreen> {
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6.0),
-                      child: Text(level.description, style: TextStyle(color: isLocked ? Colors.grey[600] : (isDark ? Colors.grey[400] : Colors.grey[600]))),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(level.description, style: TextStyle(color: isLocked ? Colors.grey[600] : (isDark ? Colors.grey[400] : Colors.grey[600]))),
+                          // Mostra se il livello è stato completato con hint
+                          if (isCompleted)
+                            FutureBuilder<bool>(
+                              future: () async {
+                                final prefs = await SharedPreferences.getInstance();
+                                return prefs.getBool('level_${level.id}_hint_used') ?? false;
+                              }(),
+                              builder: (ctx, snapshot) {
+                                if (snapshot.hasData && snapshot.data == true) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.lightbulb, size: 12, color: Colors.amber[600]),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "Completato con aiuto",
+                                          style: TextStyle(fontSize: 12, color: Colors.amber[600], fontStyle: FontStyle.italic),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                     trailing: isLocked 
                       ? null 

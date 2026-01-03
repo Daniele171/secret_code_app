@@ -31,6 +31,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   late Animation<double> _bounceAnimation;
   Timer? _gameTimer;
   int _secondsElapsed = 0;
+  
+  bool hintUsed = false;
+  String? hintText;
+  bool hintAvailable = true;
 
   @override
   void initState() {
@@ -38,6 +42,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     // Inizializza i colori disponibili in base alle impostazioni
     currentColors = kGameColors.keys.toList().take(widget.settings.numberOfColors).toList();
     selectedColor = currentColors[0];
+    
+    // Inizializza hint
+    hintText = widget.settings.hint;
+    hintAvailable = hintText != null && hintText!.isNotEmpty;
     
     // Configurazione animazioni
     _animationController = AnimationController(
@@ -129,6 +137,57 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     ));
   }
 
+  void _showHint() {
+    if (!hintAvailable || hintUsed) return;
+    HapticFeedback.lightImpact();
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "💡 AIUTO",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hintText ?? "Nessun aiuto disponibile",
+              style: const TextStyle(fontSize: 16, height: 1.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                setState(() => hintUsed = true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Aiuto utilizzato. Questo sarà registrato nel progresso."),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 2),
+                  )
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+              ),
+              child: const Text("Ho capito"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
   void _checkRow() {
     if (grid[currentRow].contains(null)) {
       HapticFeedback.vibrate();
@@ -190,6 +249,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       if (userId != null && userId.isNotEmpty) {
         // Se stiamo giocando un livello della carriera (levelId != null)
         if (widget.levelId != null) {
+          // Traccia se è stato usato l'hint
+          if (hintUsed) {
+            String hintKey = 'level_${widget.levelId}_hint_used';
+            await prefs.setBool(hintKey, true);
+            debugPrint("💡 Hint usato per livello ${widget.levelId}");
+          }
+          
           debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello ${widget.levelId}");
           
           // Chiamata API silenziosa per progressi carriera
@@ -361,6 +427,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             ],
           ),
         actions: [
+          if (hintAvailable)
+            IconButton(
+              onPressed: hintUsed || isGameOver ? null : _showHint,
+              icon: Icon(
+                Icons.lightbulb,
+                color: hintUsed ? Colors.grey : (isGameOver ? Colors.grey : Colors.amber),
+                size: 24,
+              ),
+              tooltip: hintUsed ? "Aiuto già utilizzato" : "Mostra aiuto",
+            ),
           IconButton(
             onPressed: _surrender, 
             icon: const Icon(Icons.flag_outlined),

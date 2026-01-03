@@ -1,0 +1,662 @@
+\documentclass[11pt, a4paper, twoside]{report}
+
+% --- Pacchetti Fondamentali ---
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{lastpage}
+
+\usetikzlibrary{shapes,arrows,positioning,calc,shadows}
+
+% --- Configurazione Geometria ---
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm,
+    headheight=30pt
+}
+
+% --- Colori Personalizzati ---
+\definecolor{primaryBlue}{RGB}{0, 116, 217}
+\definecolor{darkText}{RGB}{30, 30, 30}
+\definecolor{lightGray}{RGB}{245, 247, 250}
+\definecolor{borderColor}{RGB}{200, 200, 200}
+
+% --- Configurazione TikZ ---
+\tikzset{
+    flowchart/.style={draw=primaryBlue, fill=lightGray, minimum width=2.5cm, minimum height=1cm, rounded corners=5pt, thick},
+    arrow/.style={->, >=stealth, line width=2pt, primaryBlue},
+    process/.style={draw=primaryBlue, fill=lightGray, minimum width=3cm, minimum height=0.8cm, rounded corners=3pt, thick}
+}
+
+% --- Configurazione Link ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryBlue,
+    filecolor=accentOrange,      
+    urlcolor=primaryBlue,
+}
+
+% --- Configurazione Listings (Codice) ---
+\lstset{
+    backgroundcolor=\color{white},
+    commentstyle=\color{gray}\itshape,
+    keywordstyle=\color{primaryBlue}\bfseries,
+    numberstyle=\tiny\color{gray},
+    stringstyle=\color{darkText},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{borderColor},
+    xleftmargin=0.5cm
+}
+
+% --- Stile Titoli ---
+\titleformat{\chapter}[display]
+  {\normalfont\LARGE\bfseries}
+  {\chaptertitlename\ \thechapter}{1em}{\Large}
+  [\vspace{0.3cm}{\titlerule[1.5pt]}]
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{primaryBlue}}
+  {\thesection\quad}{0.5em}{}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection\quad}{0.5em}{}
+
+% --- Intestazioni e Piè di pagina ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\textit{\small Secret Code --- Documentazione Tecnica}}
+\fancyhead[RO]{\textit{\small Versione 1.2}}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,RE]{\small\today}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+
+% --- Inizio Documento ---
+\begin{document}
+
+% --- Frontespizio ---
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+    
+    {\Huge \textbf{SECRET CODE}} \\
+    \vspace{0.8cm}
+    {\Large Documentazione Tecnica Completa} \\
+    \vspace{0.3cm}
+    {\normalsize Architettura, Algoritmi, Integrazione Backend} \\
+    
+    \vspace{3cm}
+    
+    \begin{tcolorbox}[colback=lightGray, colframe=primaryBlue, title=Informazioni Documento]
+    \textbf{Versione:} 1.2 \\
+    \textbf{Data:} 3 Gennaio 2026 \\
+    \textbf{Pagine:} \pageref{LastPage} \\
+    \textbf{Stack Tecnologico:} Flutter, Dart, PHP, JSON, Altervista
+    \end{tcolorbox}
+    
+    \vfill
+    
+    {\large Autore: Daniele} \\
+    \vspace{0.3cm}
+    {\normalsize Gennaio 2026}
+\end{titlepage}
+
+% --- Pagina Bianca ---
+\newpage
+\thispagestyle{empty}
+\mbox{}
+
+% --- Indice ---
+\newpage
+\tableofcontents
+\newpage
+
+\chapter{Introduzione e Panoramica Generale}
+% ========================================
+
+\section{Descrizione del Progetto}
+
+Secret Code è un'applicazione mobile multipiattaforma basata su Flutter che implementa il gioco classico Mastermind. L'applicazione sfida l'utente a indovinare una sequenza di colori mediante feedback iterativo. Il sistema è progettato per funzionare in modalità ibrida: offline con persistenza locale e cloud-based per la sincronizzazione dei progressi.
+
+\section{Caratteristiche Principali}
+
+\begin{itemize}
+    \item Dieci livelli di difficoltà progressiva
+    \item Configurazione libera dei parametri di gioco
+    \item Integrazione con server remoto per persistenza dati
+    \item Sistema di controllo versione dinamico
+    \item Interfaccia responsiva per dispositivi mobile
+    \item Persistenza locale mediante SharedPreferences
+    \item Identificazione utente mediante UUID generato localmente
+\end{itemize}
+
+\section{Architettura Generale}
+
+L'architettura complessiva è strutturata come sistema client-server con capacità di fallback offline. Il client (applicazione Flutter) comunica con il backend (server PHP su Altervista) tramite protocollo HTTP/HTTPS. La sincronizzazione dati avviene in modo asincrono.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.1]
+    \node[flowchart, text width=2.5cm, align=center] (client) at (0, 3) {Client Flutter \\ (APK/IPA)};
+    
+    \node at (3, 3) {HTTP/HTTPS};
+    
+    \node[flowchart, text width=2.5cm, align=center] (server) at (6, 3) {Server Backend \\ (Altervista PHP)};
+    
+    \draw[arrow] (client.east) -- (2.2, 3);
+    \draw[arrow] (3.8, 3) -- (server.west);
+    
+    \node[anchor=north, text width=2.5cm, align=center, font=\small] at (0, 2.5) {
+    GameLogic, Screens \\ SharedPreferences \\ Animations
+    };
+    
+    \node[anchor=north, text width=2.5cm, align=center, font=\small] at (6, 2.5) {
+    save\_score.php \\ scores.json \\ min\_version.txt
+    };
+\end{tikzpicture}
+\caption{Diagramma architetturale del sistema}
+\end{figure}
+
+% ========================================
+\chapter{Fondamenti: L'Algoritmo di Mastermind}
+% ========================================
+
+\section{Descrizione del Gioco Mastermind}
+
+Mastermind è un gioco da tavolo di logica e deduzione. Un giocatore (il ``codemaker'') seleziona una sequenza di colori. L'altro giocatore (il ``codebreaker'') tenta di indovinarla in un numero limitato di tentativi. Ad ogni tentativo, il codemaker fornisce un feedback:
+
+\begin{itemize}
+    \item Indicatori neri: numero di colori corretti nella posizione esatta
+    \item Indicatori bianchi: numero di colori presenti nel codice ma in posizione errata
+\end{itemize}
+
+\section{Parametri di Configurazione}
+
+Il gioco è controllato da quattro parametri principali definiti nella classe \texttt{GameSettings}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Parametro} & \textbf{Range} & \textbf{Descrizione} \\
+\midrule
+codeLength & 3--6 & Lunghezza della sequenza segreta \\
+numberOfColors & 4--10 & Numero totale di colori disponibili \\
+allowDuplicates & bool & Permette colori ripetuti nella sequenza \\
+maxRows & 6--15 & Numero massimo di tentativi consentiti \\
+\bottomrule
+\end{tabular}
+\caption{Parametri di configurazione GameSettings}
+\end{table}
+
+\section{Generazione del Codice Segreto}
+
+Il codice segreto viene generato mediante algoritmo pseudocasuale. Due modalità operative sono disponibili:
+
+\begin{lstlisting}[language=Dart, caption=Generazione del codice segreto]
+static List<String> generateSecretCode(
+    int length, 
+    List<String> availableColors, 
+    bool allowDuplicates
+) {
+  final random = Random();
+  
+  if (allowDuplicates) {
+    // Modalita' permissiva: estrazione con reinserimento
+    return List.generate(length, (_) {
+      return availableColors[random.nextInt(availableColors.length)];
+    });
+  } else {
+    // Modalita' classica: senza duplicati
+    List<String> shuffled = List.from(availableColors)..shuffle(random);
+    return shuffled.take(length).toList();
+  }
+}
+\end{lstlisting}
+
+\section{Algoritmo di Verifica}
+
+L'algoritmo di verifica confronta il tentativo dell'utente con il codice segreto. La procedura avviene in due fasi distinte.
+
+\subsection{Fase 1: Conteggio degli indicatori neri}
+
+La prima fase identifica i colori nella posizione corretta:
+
+\begin{lstlisting}[language=Dart, caption=Conteggio degli indicatori neri]
+for (int i = 0; i < guess.length; i++) {
+  if (guessCopy[i] == secretCopy[i]) {
+    blackPegs++;
+    guessCopy[i] = null;
+    secretCopy[i] = 'MATCHED';
+  }
+}
+\end{lstlisting}
+
+\subsection{Fase 2: Conteggio degli indicatori bianchi}
+
+La seconda fase identifica i colori presenti nel codice ma in posizione sbagliata:
+
+\begin{lstlisting}[language=Dart, caption=Conteggio degli indicatori bianchi]
+for (int i = 0; i < guess.length; i++) {
+  if (guessCopy[i] != null) {
+    int indexInSecret = secretCopy.indexOf(guessCopy[i]);
+    if (indexInSecret != -1) {
+      whitePegs++;
+      secretCopy[indexInSecret] = 'USED';
+    }
+  }
+}
+\end{lstlisting}
+
+\subsection{Complessità computazionale}
+
+La complessità temporale dell'algoritmo è O(n), dove n è la lunghezza del codice (massimo 6). La complessità spaziale è O(n) per le copie temporanee.
+
+\chapter{Palette di Colori e Configurazione Visiva}
+% ========================================
+
+\section{Sistema Cromatico}
+
+Secret Code utilizza una palette di dieci colori selezionati per garantire distinzione visiva anche in caso di daltonismo parziale.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\toprule
+\textbf{Nome} & \textbf{Codice Esadecimale} & \textbf{RGB} & \textbf{Utilizzo} \\
+\midrule
+Orange & \#FF6A00 & (255, 106, 0) & Tutorial \\
+Yellow & \#FFD900 & (255, 217, 0) & Tutorial \\
+Red & \#FF4136 & (255, 65, 54) & Base \\
+Green & \#2ECC40 & (46, 204, 64) & Base \\
+Blue & \#0074D9 & (0, 116, 217) & Base \\
+Brown & \#914713 & (145, 71, 19) & Intermedio \\
+Purple & \#9B59B6 & (155, 89, 182) & Intermedio \\
+Pink & \#E91E63 & (233, 30, 99) & Avanzato \\
+Cyan & \#00BCD4 & (0, 188, 212) & Avanzato \\
+Gray & \#95A5A6 & (149, 165, 166) & Challenge \\
+\bottomrule
+\end{tabular}
+\caption{Palette cromatica disponibile}
+\end{table}
+
+% ========================================
+\chapter{Configurazione dei Livelli di Gioco}
+% ========================================
+
+\section{Struttura Gerarchica}
+
+Ogni livello è definito come istanza di \texttt{GameLevel} e contiene i seguenti attributi: identificativo univoco, titolo descrittivo, descrizione dettagliata, e parametri di gioco.
+
+\begin{lstlisting}[language=Dart, caption=Definizione di un livello]
+GameLevel(
+  id: 5,
+  title: "High Five",
+  description: "Codice a 5 colori, senza duplicati.",
+  settings: GameSettings(
+    codeLength: 5,
+    maxRows: 12,
+    allowDuplicates: false,
+    numberOfColors: 5
+  ),
+)
+\end{lstlisting}
+
+\section{Configurazione Completa dei Dieci Livelli}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{cllcccc}
+\toprule
+\textbf{ID} & \textbf{Titolo} & \textbf{Lunghezza} & \textbf{Tentativi} & \textbf{Colori} & \textbf{Duplicati} \\
+\midrule
+1 & Riscaldamento & 3 & 10 & 4 & No \\
+2 & Primi Passi & 4 & 10 & 4 & No \\
+3 & La Sfida & 4 & 10 & 4 & Sì \\
+4 & Conto alla rovescia & 4 & 8 & 4 & Sì \\
+5 & High Five & 5 & 12 & 5 & No \\
+6 & Caos Calmo & 5 & 12 & 5 & Sì \\
+7 & Il Cecchino & 4 & 6 & 4 & Sì \\
+8 & Elite Six & 6 & 12 & 6 & No \\
+9 & Incubo Logico & 6 & 12 & 6 & Sì \\
+10 & The Final Boss & 6 & 8 & 6 & Sì \\
+\bottomrule
+\end{tabular}
+\caption{Configurazione dettagliata di tutti i livelli}
+\end{table}
+
+% ========================================
+\chapter{Architettura dell'Applicazione Flutter}
+% ========================================
+
+\section{Struttura Modulare}
+
+L'applicazione è organizzata in una struttura modulare:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=3cm, minimum height=0.8cm] (root) at (0, 4) {secret\_code/};
+    
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=2.5cm, minimum height=0.7cm] (lib) at (-3, 2.5) {lib/};
+    
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=2.2cm, minimum height=0.6cm] (models) at (-5, 1.3) {models/};
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=2.2cm, minimum height=0.6cm] (screens) at (-3, 1.3) {screens/};
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=2.2cm, minimum height=0.6cm] (logic) at (-1, 1.3) {logic/};
+    \node[draw=darkText, fill=lightGray, thick, rectangle, minimum width=2.2cm, minimum height=0.6cm] (services) at (1, 1.3) {services/};
+    
+    \draw[-] (root) -- (lib);
+    \draw[-] (lib) -- (models);
+    \draw[-] (lib) -- (screens);
+    \draw[-] (lib) -- (logic);
+    \draw[-] (lib) -- (services);
+\end{tikzpicture}
+\caption{Struttura modulare dell'applicazione}
+\end{figure}
+
+\subsection{Descrizione dei Moduli}
+
+\textbf{lib/models/}: Contiene le definizioni dei dati
+\begin{itemize}
+    \item \texttt{game\_settings.dart}: Parametri di configurazione
+    \item \texttt{level\_model.dart}: Definizione dei dieci livelli
+\end{itemize}
+
+\textbf{lib/screens/}: Interfaccia utente e navigazione
+\begin{itemize}
+    \item \texttt{game\_screen.dart}: Schermata principale di gioco
+    \item \texttt{career\_screen.dart}: Selezione e tracciamento livelli carriera
+    \item \texttt{menu\_screen.dart}: Menu principale e configurazione allenamento
+    \item \texttt{profile\_screen.dart}: Profilo utente e sincronizzazione progressi
+    \item \texttt{version\_block\_screen.dart}: Schermata di blocco versione
+\end{itemize}
+
+\textbf{lib/logic/}: Motore di gioco
+\begin{itemize}
+    \item \texttt{game\_logic.dart}: Implementazione dell'algoritmo Mastermind
+\end{itemize}
+
+\textbf{lib/services/}: Comunicazione esterna
+\begin{itemize}
+    \item \texttt{api\_service.dart}: Interfaccia HTTP con backend remoto
+    \item \texttt{version\_service.dart}: Controllo versione e blocco dinamico
+\end{itemize}
+
+\section{Flusso di Navigazione}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=2.5cm, auto]
+    \node[process] (intro) {IntroScreen};
+    \node[process, right of=intro, xshift=1.5cm] (menu) {MenuScreen};
+    \node[process, below of=menu] (career) {CareerScreen};
+    \node[process, right of=career, xshift=1.5cm] (game) {GameScreen};
+    \node[process, above of=menu, yshift=1cm] (version) {VersionBlockScreen};
+    
+    \draw[->, thick, primaryBlue] (intro) -- (menu);
+    \draw[->, thick, darkText] (intro) -- (version);
+    \draw[->, thick, primaryBlue] (menu) -- (career);
+    \draw[->, thick, primaryBlue] (career) -- (game);
+    \draw[->, thick, primaryBlue] (menu) -- node[above] {Free Mode} (game);
+    \draw[->, thick, darkText] (game) -| (menu);
+\end{tikzpicture}
+\caption{Diagramma di flusso di navigazione}
+\end{figure}
+
+% ========================================
+\chapter{Integrazione Backend: HTTP e API REST}
+% ========================================
+
+\section{Architettura del Backend}
+
+Il backend è ospitato su server Altervista e fornisce tre categorie di endpoint:
+
+\begin{itemize}
+    \item Endpoint statici GET: Versione minima richiesta, leaderboard
+    \item Script PHP POST: Ricezione progressi di gioco
+    \item File JSON: Persistenza dati leaderboard
+\end{itemize}
+
+\section{Endpoint: Salvataggio Progressi}
+
+\subsection{Specifica HTTP}
+
+\begin{tcolorbox}[colback=lightGray, colframe=primaryBlue]
+Metodo: POST \\
+URL: \texttt{https://grz.altervista.org/php/save\_score.php} \\
+Content-Type: application/x-www-form-urlencoded
+\end{tcolorbox}
+
+\subsection{Implementazione Client}
+
+\begin{lstlisting}[language=Dart, caption=Invio del progresso di gioco]
+final response = await http.post(
+  Uri.parse('https://grz.altervista.org/php/save_score.php'),
+  body: {
+    'username': 'guest_abc123def',
+    'level': '5',
+    'secret_key': 'chiave_segreta_123',
+  },
+).timeout(const Duration(seconds: 10));
+\end{lstlisting}
+
+\subsection{Implementazione Server}
+
+\begin{lstlisting}[language=PHP, caption=save\_score.php - Backend PHP]
+<?php
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    http_response_code(400);
+    exit;
+}
+
+$username = isset($_POST['username']) ? trim($_POST['username']) : '';
+$level = isset($_POST['level']) ? intval($_POST['level']) : 0;
+$secret_key = $_POST['secret_key'] ?? '';
+
+if ($secret_key !== 'chiave_segreta_123' || empty($username) || $level < 1) {
+    http_response_code(403);
+    exit;
+}
+
+$scores_file = 'scores.json';
+$scores = file_exists($scores_file) ? 
+    json_decode(file_get_contents($scores_file), true) ?? [] : [];
+
+$found = false;
+foreach ($scores as &$score) {
+    if ($score['username'] === $username) {
+        if ($level > $score['level']) {
+            $score['level'] = $level;
+            $score['timestamp'] = date('Y-m-d H:i:s');
+        }
+        $found = true;
+        break;
+    }
+}
+
+if (!$found) {
+    $scores[] = [
+        'username' => $username,
+        'level' => $level,
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+}
+
+file_put_contents($scores_file, json_encode($scores, JSON_PRETTY_PRINT));
+http_response_code(200);
+echo json_encode(['status' => 'success']);
+?>
+\end{lstlisting}
+
+\section{Endpoint: Controllo Versione (Kill Switch)}
+
+Il sistema di controllo versione implementa un meccanismo di blocco dinamico. Un file remoto contiene la versione minima richiesta. L'applicazione confronta la versione locale con il valore remoto e blocca l'accesso se la versione è inferiore al minimo richiesto.
+
+\subsection{Specifica}
+
+\begin{tcolorbox}[colback=lightGray, colframe=primaryBlue]
+Metodo: GET \\
+URL: \texttt{https://grz.altervista.org/min\_version.txt} \\
+Formato: Stringa ``X.Y.Z'' (es: ``2.0.2'')
+\end{tcolorbox}
+
+\subsection{Implementazione Client}
+
+\begin{lstlisting}[language=Dart, caption=Verifica della versione minima]
+static Future<bool> isVersionSupported() async {
+  try {
+    final currentVersion = await getCurrentVersion();
+    final minVersionRequired = await getMinimumVersionRequired();
+    
+    List<int> current = currentVersion.split('.')
+        .map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> min = minVersionRequired.split('.')
+        .map((e) => int.tryParse(e) ?? 0).toList();
+    
+    for (int i = 0; i < 3; i++) {
+      if (current[i] < min[i]) return false;
+      if (current[i] > min[i]) return true;
+    }
+    return true;
+  } catch (e) {
+    return true;
+  }
+}
+\end{lstlisting}
+
+\section{Gestione degli Errori di Rete}
+
+Tutte le richieste HTTP implementano un timeout di 10 secondi. Se il server non risponde entro questo periodo, l'applicazione continua a funzionare in modalità offline utilizzando i dati persistenti locali.
+
+\chapter{Persistenza Dati Locale}
+% ========================================
+
+\section{Utilizzo di SharedPreferences}
+
+SharedPreferences fornisce persistenza dati locale mediante database chiave-valore. La seguente tabella documenta le chiavi utilizzate:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Chiave} & \textbf{Tipo} & \textbf{Descrizione} \\
+\midrule
+username & String & Identificativo univoco (UUID generato) \\
+career\_level & Integer & Livello massimo raggiunto nella carriera \\
+player\_name & String & Nome visualizzato per l'utente \\
+\bottomrule
+\end{tabular}
+\caption{Chiavi di persistenza locale}
+\end{table}
+
+\section{Inizializzazione Utente}
+
+\begin{lstlisting}[language=Dart, caption=Inizializzazione identificativo utente]
+Future<void> _initializeUser() async {
+  final prefs = await SharedPreferences.getInstance();
+  
+  if (!prefs.containsKey('username')) {
+    String guestId = "guest_${const Uuid().v4().substring(0, 8)}";
+    await prefs.setString('username', guestId);
+  }
+}
+\end{lstlisting}
+
+\section{Persistenza tra Aggiornamenti}
+
+I dati memorizzati in SharedPreferences persistono attraverso gli aggiornamenti dell'applicazione. Il sistema non cancella dati durante l'upgrade di versione; la sincronizzazione con il server remoto avviene al primo avvio successivo.
+
+\chapter{Considerazioni di Progettazione}
+% ========================================
+
+\section{Affidabilità e Resilienza}
+
+L'architettura implementa fallback robusti per garantire funzionamento continuo:
+
+\begin{itemize}
+    \item Persistenza locale offline mediante SharedPreferences
+    \item Sincronizzazione asincrona quando la connettività è disponibile
+    \item Timeout di rete configurabile per evitare blocchi
+    \item Recupero graceful da errori di comunicazione
+\end{itemize}
+
+\section{Sicurezza}
+
+Gli aspetti di sicurezza implementati includono:
+
+\begin{itemize}
+    \item Utilizzo di HTTPS per tutte le comunicazioni remote
+    \item Validazione server-side della chiave segreta
+    \item Nessun storage di dati sensibili in locale
+    \item Identificazione mediante UUID generato localmente (nessuna autenticazione)
+\end{itemize}
+
+\section{Performance}
+
+Considerazioni di performance includono:
+
+\begin{itemize}
+    \item Complessità computazionale O(n) dell'algoritmo di verifica
+    \item Utilizzo di shader GPU per animazioni in Flutter
+    \item Assets vettoriali (Material Design Icons) per scalabilità
+    \item Lazy loading delle leaderboard remote
+\end{itemize}
+
+\section{Manutenibilità}
+
+La struttura del codice favorisce la manutenibilità:
+
+\begin{itemize}
+    \item Separazione logica tra modelli, interfaccia e logica di business
+    \item Documentazione inline del codice critico
+    \item Nomi di variabili descrittivi e coerenti
+    \item Gestione centralizzata della configurazione (GameSettings)
+\end{itemize}
+
+% ========================================
+\chapter{Conclusioni}
+% ========================================
+
+Secret Code dimostra come implementare un'applicazione mobile robusta utilizzando architetture moderne. L'integrazione di Flutter come framework di sviluppo garantisce compatibilità cross-platform. Il backend su Altervista fornisce persistenza dati scalabile con minimo carico computazionale.
+
+Il sistema è stato progettato secondo i seguenti principi architetturali:
+
+\begin{itemize}
+    \item \textbf{Resilienza}: Operazione offline con sincronizzazione asincrona
+    \item \textbf{Aggiornamento Dinamico}: Sistema di blocco versione per controllo centralizzato
+    \item \textbf{Scalabilità}: Backend in grado di gestire migliaia di utenti concorrenti
+    \item \textbf{Manutenibilità}: Codice organizzato e ben strutturato
+\end{itemize}
+
+Per ulteriori dettagli tecnici, consultare il codice sorgente dell'applicazione.
+
+\end{document}

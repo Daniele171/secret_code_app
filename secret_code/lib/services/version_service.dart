@@ -12,7 +12,7 @@ class VersionService {
   static const String _latestVersionUrl = "https://grz.altervista.org/html/latest_version.txt";
 
   // Fallback di sicurezza: se il sito è offline, usiamo questa come minima
-  static const String _fallbackMinVersion = "2.0.0";
+  static const String _fallbackMinVersion = "2.0.5";
 
   /// Ottiene le informazioni della versione corrente dell'app
   static Future<PackageInfo> getCurrentVersion() async {

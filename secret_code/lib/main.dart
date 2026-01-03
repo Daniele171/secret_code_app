@@ -53,6 +53,7 @@ class _IntroScreenState extends State<IntroScreen> {
     { "title": "BENVENUTO", "desc": "Sfida la tua logica.\nIndovina il Codice Segreto." },
     { "title": "SALVATAGGIO AUTO", "desc": "Giochi senza login.\nI tuoi progressi sono salvati online." },
     { "title": "⚫ PIOLI NERI", "desc": "Colore Giusto nella Posizione Giusta." },
+    { "title": "⚪ PIOLI BIANCHI", "desc": "Colore Giusto nella Posizione Sbagliata." },
   ];
 
   @override

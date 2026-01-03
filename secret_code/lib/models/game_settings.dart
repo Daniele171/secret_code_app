@@ -3,11 +3,13 @@ class GameSettings {
   int maxRows;
   bool allowDuplicates;
   int numberOfColors;
+  String? hint;
 
   GameSettings({
     this.codeLength = 4, 
     this.maxRows = 10,
     this.allowDuplicates = true,
     this.numberOfColors = 4,
+    this.hint,
   });
 }
