@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/level_model.dart';
+import '../models/game_settings.dart';
 import 'game_screen.dart';
 
 class CareerScreen extends StatefulWidget {
