@@ -85,7 +85,12 @@ class _MenuScreenState extends State<MenuScreen> {
                        _buildSettingCard(context, title: "Lunghezza Codice", value: _settings.codeLength.toString(),
                         child: Slider(
                           value: _settings.codeLength.toDouble(), min: 3, max: 6, divisions: 3, label: _settings.codeLength.toString(),
-                          onChanged: (v) => setState(() => _settings.codeLength = v.toInt()),
+                          onChanged: (v) => setState(() {
+                            _settings.codeLength = v.toInt();
+                            if (!_settings.allowDuplicates && _settings.numberOfColors < _settings.codeLength) {
+                              _settings.numberOfColors = _settings.codeLength;
+                            }
+                          }),
                         ),
                       ),
                       const SizedBox(height: 15),
@@ -104,19 +109,29 @@ class _MenuScreenState extends State<MenuScreen> {
                           value: _settings.allowDuplicates, 
                           activeTrackColor: Colors.orangeAccent, 
                           contentPadding: EdgeInsets.zero,
-                          onChanged: (v) => setState(() => _settings.allowDuplicates = v),
+                          onChanged: (v) => setState(() {
+                            _settings.allowDuplicates = v;
+                            if (!v && _settings.numberOfColors < _settings.codeLength) {
+                              _settings.numberOfColors = _settings.codeLength;
+                            }
+                          }),
                         ),
                       ),
                       const SizedBox(height: 15),
                       _buildSettingCard(context, title: "Numero Colori", value: _settings.numberOfColors.toString(),
                         child: Slider(
                           value: _settings.numberOfColors.toDouble(), 
-                          min: 6, 
-                          max: 12, 
+                          min: 4, 
+                          max: 10, 
                           divisions: 6, 
                           label: _settings.numberOfColors.toString(),
                           activeColor: Colors.purple,
-                          onChanged: (v) => setState(() => _settings.numberOfColors = v.toInt()),
+                          onChanged: (v) => setState(() {
+                            _settings.numberOfColors = v.toInt();
+                            if (!_settings.allowDuplicates && _settings.numberOfColors < _settings.codeLength) {
+                              _settings.codeLength = _settings.numberOfColors;
+                            }
+                          }),
                         ),
                       ),
                     ],
