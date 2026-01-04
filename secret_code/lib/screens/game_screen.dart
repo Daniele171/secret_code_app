@@ -104,6 +104,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       revealedHintIndex = null;
       revealedHintColor = null;
     });
+    
+    // 🎯 DEBUG: Mostra il codice segreto nel terminale
+    debugPrint("🔐 CODICE SEGRETO GENERATO: ${secretCode.join(' - ').toUpperCase()}");
+    
     _startTimer();
     _animationController.forward(from: 0.0);
   }
