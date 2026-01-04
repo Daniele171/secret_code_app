@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Fondamentale per recuperare l'ID ospite
@@ -22,6 +23,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   late List<Map<String, int>?> feedbacks;
   late List<String> currentColors;
 
+  int? revealedHintIndex;
+  String? revealedHintColor;
+
   int currentRow = 0;
   String? selectedColor;
   bool isGameOver = false;
@@ -43,9 +47,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     currentColors = kGameColors.keys.toList().take(widget.settings.numberOfColors).toList();
     selectedColor = currentColors[0];
     
-    // Inizializza hint
+    // Inizializza hint (testuale o di colore)
     hintText = widget.settings.hint;
-    hintAvailable = hintText != null && hintText!.isNotEmpty;
+    hintAvailable = true; // Il suggerimento colore è sempre disponibile
     
     // Configurazione animazioni
     _animationController = AnimationController(
@@ -96,6 +100,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       feedbacks = List.filled(widget.settings.maxRows, null);
       currentRow = 0;
       isGameOver = false;
+      hintUsed = false;
+      revealedHintIndex = null;
+      revealedHintColor = null;
     });
     _startTimer();
     _animationController.forward(from: 0.0);
@@ -137,10 +144,29 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     ));
   }
 
+  void _revealHint(int index) {
+    Navigator.pop(context);
+    setState(() {
+      revealedHintIndex = index;
+      revealedHintColor = secretCode[index];
+      hintUsed = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Posizione ${index + 1}: ${revealedHintColor!.toUpperCase()}"),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 2),
+      )
+    );
+  }
+
   void _showHint() {
     if (!hintAvailable || hintUsed) return;
     HapticFeedback.lightImpact();
-    
+
+    final positions = List.generate(widget.settings.codeLength, (i) => i);
+    final defaultIndex = Random().nextInt(widget.settings.codeLength);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -153,34 +179,48 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "💡 AIUTO",
+              "💡 SUGGERIMENTO",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-            Text(
-              hintText ?? "Nessun aiuto disponibile",
-              style: const TextStyle(fontSize: 16, height: 1.5),
+            const SizedBox(height: 12),
+            if (hintText != null && hintText!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  hintText!,
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            const Text(
+              "Scegli la posizione di cui vuoi conoscere il colore oppure lascia che lo scelga io.",
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() => hintUsed = true);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Aiuto utilizzato. Questo sarà registrato nel progresso."),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 2),
-                  )
-                );
-              },
+            const SizedBox(height: 16),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: positions.map((idx) => ElevatedButton(
+                onPressed: () => _revealHint(idx),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  backgroundColor: Colors.blueGrey[700],
+                  foregroundColor: Colors.white,
+                ),
+                child: Text("Pos ${idx + 1}"),
+              )).toList(),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _revealHint(defaultIndex),
+              icon: const Icon(Icons.casino_outlined),
+              label: const Text("Posizione casuale"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
-              child: const Text("Ho capito"),
             )
           ],
         ),
@@ -254,6 +294,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             String hintKey = 'level_${widget.levelId}_hint_used';
             await prefs.setBool(hintKey, true);
             debugPrint("💡 Hint usato per livello ${widget.levelId}");
+          }
+
+          // Aggiorna progressi locali subito dopo la vittoria
+          final currentCareerLevel = prefs.getInt('career_level') ?? 1;
+          final nextLevel = widget.levelId! + 1;
+          if (nextLevel > currentCareerLevel) {
+            await prefs.setInt('career_level', nextLevel);
+            debugPrint("🔓 Livello ${nextLevel} sbloccato localmente");
           }
           
           debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello ${widget.levelId}");
@@ -474,6 +522,40 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (revealedHintColor != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.8)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: kGameColors[revealedHintColor],
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "Suggerimento: la posizione ${revealedHintIndex! + 1} è ${revealedHintColor!.toUpperCase()}",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.orange[900],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 // Selettore Colori
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
