@@ -1,4 +1,4 @@
-package com.example.secret_code
+package com.daniele.secret_code
 
 import io.flutter.embedding.android.FlutterActivity
 
