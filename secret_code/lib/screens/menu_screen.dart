@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/game_settings.dart';
 import 'game_screen.dart';
 import 'career_screen.dart';
 import 'profile_screen.dart';
+import 'exclusive_zone_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -14,6 +16,24 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   final GameSettings _settings = GameSettings();
+  bool _isMasterUnlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnlockStatus();
+  }
+
+  Future<void> _checkUnlockStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final level = prefs.getInt('career_level') ?? 1;
+    // Se il livello è > 10 (cioè ha finito il 10), sblocca
+    if (level > 10 && _isMasterUnlocked == false) {
+      setState(() {
+        _isMasterUnlocked = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +72,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CareerScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const CareerScreen()))
+                        .then((_) => _checkUnlockStatus());
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orangeAccent,
@@ -70,6 +91,35 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                 ),
               ),
+
+              if (_isMasterUnlocked) ...[
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 70,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.heavyImpact();
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const ExclusiveZoneScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber[700], // Gold/Amber
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      elevation: 8,
+                      shadowColor: Colors.amberAccent,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.star, size: 28),
+                        SizedBox(width: 15),
+                        Text("ZONA ESCLUSIVA", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               
               const SizedBox(height: 30),
               const Divider(),

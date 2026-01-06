@@ -126,22 +126,44 @@ class _IntroScreenState extends State<IntroScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: Column(
-              key: ValueKey<int>(_currentIndex),
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(_slides[_currentIndex]['title']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
-                const SizedBox(height: 20),
-                Text(_slides[_currentIndex]['desc']!, style: const TextStyle(fontSize: 18, color: Colors.white70), textAlign: TextAlign.center),
-              ],
+      body: Stack(
+        children: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(30.0),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                child: Column(
+                  key: ValueKey<int>(_currentIndex),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_slides[_currentIndex]['title']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
+                    const SizedBox(height: 20),
+                    Text(_slides[_currentIndex]['desc']!, style: const TextStyle(fontSize: 18, color: Colors.white70), textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+          Positioned(
+            bottom: 40,
+            right: 30,
+            child: TextButton(
+              onPressed: _checkVersionAndGo,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white54,
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("SALTA", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                  SizedBox(width: 5),
+                  Icon(Icons.arrow_forward_ios, size: 14),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
