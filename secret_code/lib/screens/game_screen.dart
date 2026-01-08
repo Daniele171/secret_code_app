@@ -312,7 +312,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
             await ProgressSyncService.backupProgress();
           }
           
-          debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello ${widget.levelId}");
+          debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello $widget.levelId");
           
           // Chiamata API silenziosa per progressi carriera
           ApiService.saveProgress(userId, widget.levelId!).then((success) {

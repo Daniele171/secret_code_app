@@ -35,11 +35,17 @@ class _ExclusiveZoneScreenState extends State<ExclusiveZoneScreen> {
   }
 
   void _updateRank() {
-    if (_masterPoints >= 10000) _rankTitle = "LEGGENDA";
-    else if (_masterPoints >= 1000) _rankTitle = "GRAN MAESTRO";
-    else if (_masterPoints >= 250) _rankTitle = "MAESTRO";
-    else if (_masterPoints >= 75) _rankTitle = "ESPERTO";
-    else _rankTitle = "NEOFITA";
+    if (_masterPoints >= 10000) {
+      _rankTitle = "LEGGENDA";
+    } else if (_masterPoints >= 1000) {
+      _rankTitle = "GRAN MAESTRO";
+    } else if (_masterPoints >= 250) {
+      _rankTitle = "MAESTRO";
+    } else if (_masterPoints >= 75) {
+      _rankTitle = "ESPERTO";
+    } else {
+      _rankTitle = "NEOFITA";
+    }
   }
 
   Future<void> _startMasterChallenge(BuildContext context) async {
