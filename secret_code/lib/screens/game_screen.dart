@@ -306,7 +306,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           final nextLevel = widget.levelId! + 1;
           if (nextLevel > currentCareerLevel) {
             await prefs.setInt('career_level', nextLevel);
-            debugPrint("🔓 Livello ${nextLevel} sbloccato localmente");
+            debugPrint("🔓 Livello $nextLevel sbloccato localmente");
             
             // 🆕 BACKUP AUTOMATICO: Crea un backup ogni volta che sblocchi un livello
             await ProgressSyncService.backupProgress();
