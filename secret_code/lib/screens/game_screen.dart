@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // Fondamentale per
 import '../models/game_settings.dart';
 import '../logic/game_logic.dart';
 import '../services/api_service.dart'; // Per il salvataggio API
+import '../services/progress_sync_service.dart'; // Per il backup automatico
 
 class GameScreen extends StatefulWidget {
   final GameSettings settings;
@@ -306,6 +307,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
           if (nextLevel > currentCareerLevel) {
             await prefs.setInt('career_level', nextLevel);
             debugPrint("🔓 Livello ${nextLevel} sbloccato localmente");
+            
+            // 🆕 BACKUP AUTOMATICO: Crea un backup ogni volta che sblocchi un livello
+            await ProgressSyncService.backupProgress();
           }
           
           debugPrint("☁️ Salvataggio automatico CARRIERA per utente: $userId al livello ${widget.levelId}");

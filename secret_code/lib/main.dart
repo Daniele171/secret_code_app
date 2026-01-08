@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import 'screens/menu_screen.dart';
 import 'screens/version_block_screen.dart';
 import 'services/version_service.dart';
+import 'services/progress_sync_service.dart';
 
 void main() {
   runApp(const SecretCodeApp());
@@ -80,6 +81,10 @@ class _IntroScreenState extends State<IntroScreen> {
     } else {
       debugPrint("👤 Utente rilevato: ${prefs.getString('username')}");
     }
+    
+    // 🆕 SINCRONIZZAZIONE AUTOMATICA: Se c'è stato un aggiornamento di versione,
+    // sincronizza i progressi locali con il server Altervista
+    await ProgressSyncService.syncProgressOnVersionUpdate();
   }
 
   void _checkVersionAndGo() async {
